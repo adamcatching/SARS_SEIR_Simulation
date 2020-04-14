@@ -1,4 +1,4 @@
-# SARS_SEIR_Simulation
+# SARS SEIR Simulation
 Agent-based model testing effectiveness of mask usage. Using Monte Carlo simulations, informed by real-world parameters, various conditions can be examined for their power to slow or halt pathogen transmission.
 
 
