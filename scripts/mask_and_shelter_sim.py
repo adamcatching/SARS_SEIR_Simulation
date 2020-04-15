@@ -13,30 +13,26 @@ f.write('time,percent sheltering,percent wearing masks,infected,recovered,\
 # Fixing random state for reproducibility
 np.random.seed(100)
 
+# Set boundaries
+xboundaries = [0, 50 * fig_rat]
+yboundaries = [0, 50 * fig_rat]
+xmax, ymax = xboundaries[1]+.5 , yboundaries[1]+.5
 # Figure ratio
 fig_rat = .2
+
 # Number of steps
 N_steps = 120
 # Number of agents
 n_agents = int(4000 * round(fig_rat ** 2, 2))
 # Set delta t
-dt = .1
+dt = 1
 # Set velocity
-velo = 4
+velo = .2
+
 # Set percent of sheltering in place
 per_shelt = 0
 # Set percent of masked agents
 per_mask = 0
-# Set boundaries
-xboundaries = [0, 50 * fig_rat]
-yboundaries = [0, 50 * fig_rat]
-xmax, ymax = xboundaries[1]+.5 , yboundaries[1]+.5
-
-# Define the figure
-fig = plt.figure(figsize=(10 * fig_rat, 10 * fig_rat))
-ax = plt.axes(xlim=(-.5, xmax), ylim=(-.5, ymax))
-plt.xticks([])
-plt.yticks([])
 
 # Define the array of agents with given properties
 agents = np.zeros(n_agents, dtype=[('position', float, 2),
@@ -46,11 +42,12 @@ agents = np.zeros(n_agents, dtype=[('position', float, 2),
                                    ('time', int, 1),
                                    ('symptomatic', int, 1),
                                    ('num infected', int, 1),
-                                   ('mask', bool, 1)])
+                                   ('mask', bool, 1),
+                                   ('touch', int, 1)])
 
 """Calculate initial values of agents"""
 # Define the initial random positions within the figure
-agents['position'] = np.random.uniform(0, 4, (n_agents, 2))
+agents['position'] = np.random.uniform(0, xmax, (n_agents, 2))
 # Define the initial velocity angles
 init_angles = np.random.uniform(0, 2 * np.pi, n_agents)
 # Get initial x and y velocities from angles
@@ -95,17 +92,18 @@ agents['mask'][0] = False
 agents['symptomatic'][0] = 1
 
 """Define the values of the display"""
-# Set boundaries for the agents to run around
-xboundaries = [0, 4]
-yboundaries = [0, 4]
-xmax, ymax = xboundaries[1], yboundaries[1]
+
 # Define the figure
-fig = plt.figure()
-ax = plt.axes(xlim=(0, xmax), ylim=(0, ymax))
+fig = plt.figure(figsize=(10 * fig_rat, 10 * fig_rat))
+ax = plt.axes(xlim=(-.5, xmax), ylim=(-.5, ymax))
+plt.xticks([])
+plt.yticks([])
+
 # Initialize the plot
 scatter = ax.scatter(agents['position'][:, 0], 
                      agents['position'][:, 1],
-                     color=agents['color'])
+                     color=agents['color'],
+                     s=64)
 
 def update(i):
     """
@@ -167,36 +165,54 @@ def update(i):
                 # Compute distance between agents
                 dist_temp = np.sqrt(dx ** 2 + dy ** 2)
                 # If distance of interaction is closer than both radii, collide
-                if dist_temp <= .05:
-                    # If one of the agents is infected, determine if 
-                    # the other agent should be infected, if both are 
-                    # wearing a mask no one is infected
-                    agent_j = agents['state'][j] == 'Infected'
-                    agent_k = agents['state'][k] == 'Susceptible'
-                    if agent_j and agent_k:
-                        agent_k_mask = agents['mask'][j]
-                        agent_j_mask = agents['mask'][k]
-                        # If susceptible agent is wearing a mask
-                        if not agent_j_mask and agent_k_mask:
-                            # 50% chance of infection
-                            if np.random.random() >= .5:
-                                # Update susceptible to infected
-                                agents['state'][k] = 'Infected'
-                                agents['color'][k] = 'Orangered'
-                                agents['time'][k] = 1
-                        # If infected agent is wearing a mask
-                        elif agent_j_mask and not agent_k_mask:
-                            # 5% chance of infection
-                            if np.random.random() >= .95:
-                                # Update susceptible to infected
-                                agents['state'][k] = 'Infected'
-                                agents['color'][k] = 'Firebrick'
-                                agents['time'][k] = 1
-                        # If neither are wearing a mask
-                        elif not agent_j_mask and not agent_k_mask:
-                            agents['state'][k] = 'Infected'
-                            agents['color'][k] = 'Firebrick'
-                            agents['time'][k] = 1
+                if dist_temp <= .5:
+                        agents['touch'][j] += 1
+                        if agents['state'][j] == 'Infected' and agents['state'][k] == 'Susceptible':
+                            if agents['symptomatic'][j] == 1:
+                                if np.random.gamma(shape=g_shape, scale=g_scale) >= 1:
+                                    agents['state'][k] = 'Infected'
+                                    if np.random.random() >= .5:
+                                        agents['symptomatic'][k] = 1
+                                        agents['color'][k] = 'Firebrick'
+                                    else:
+                                        agents['symptomatic'][k] = 0
+                                        agents['color'][k] = 'Goldenrod'
+                                    agents['time'][k] = 1
+                                    agents['num infected'][j] += 1
+                            else:
+                                if np.random.gamma(shape=g_shape, scale=g_scale) * asym_prob >=1:
+                                    agents['state'][k] = 'Infected'
+                                    if np.random.random() >= .5:
+                                        agents['symptomatic'][k] = 1
+                                        agents['color'][k] = 'Firebrick'
+                                    else:
+                                        agents['symptomatic'][k] = 0
+                                        agents['color'][k] = 'Goldenrod'
+                                    agents['time'][k] = 1
+                                    agents['num infected'][j] += 1
+                        elif agents['state'][k] == 'Infected' and agents['state'][j] == 'Susceptible':
+                            if agents['symptomatic'][k] == 1:
+                                if np.random.gamma(shape=g_shape, scale=g_scale) >= 1:
+                                    agents['state'][j] = 'Infected'
+                                    if np.random.random() >= .5:
+                                        agents['symptomatic'][j] = 1
+                                        agents['color'][j] = 'Firebrick'
+                                    else:
+                                        agents['symptomatic'][j] = 0
+                                        agents['color'][j] = 'Goldenrod'
+                                    agents['time'][j] = 1
+                                    agents['num infected'][k] += 1
+                            else:
+                                if np.random.gamma(shape=g_shape, scale=g_scale) * asym_prob >=1:
+                                    agents['state'][j] = 'Infected'
+                                    if np.random.random() >= .5:
+                                        agents['symptomatic'][j] = 1
+                                        agents['color'][j] = 'Firebrick'
+                                    else:
+                                        agents['symptomatic'][j] = 0
+                                        agents['color'][j] = 'Goldenrod'
+                                    agents['time'][j] = 1
+                                    agents['num infected'][k] += 1
 
         # Bounce agents off wall if projected position is beyond boundary conditions
         if x >= xmax:
