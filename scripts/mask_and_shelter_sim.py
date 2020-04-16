@@ -70,7 +70,7 @@ asympt_incubate = 24 * 5.1
 # Number of hours for symptomatic incubation
 sympt_incubate = 24 * 4.6
 # Number of hours for asymptomatic infection
-asympt_infect = 14*24
+asympt_infect = 21*24
 # Number of hours for symptomatic infection
 sympt_infect = 12
 # Define values for infection gamma pdf
@@ -120,8 +120,8 @@ def update(i):
     to calculate if an infected agent recovers, if two agents 
     interact, and if the agent bounces off a boundary
     """
-    
-    print(i)
+    if i % int(N_steps / 10) == 0:
+        print(str(i / int(N_steps / 10) * 10) + '% done')
 
     # Iterate over all agents 
     for j in range(n_agents):
@@ -239,13 +239,18 @@ def update(i):
                                     agents['time'][k] = 1
                                     agents['num infected'][j] += 1
                         elif not agent_j_sympt and agent_k_suscept:
+                            # Get the time that agent j has been infectious
+                            agent_j_time = agents['time'][j]
+                            # Normalize time to infectious period
+                            agent_j_norm_time = agent_j_time / asympt_infect
                             # Define the probability of asymptomatic infect
                             temp_gam = np.random.gamma(g_shape, g_scale)
-                            asympt_gam = temp_gam * asym_prob
+                            asympt_gam = temp_gam * asym_prob * agent_j_norm_time
                             if asympt_gam >=1:
                                 # Are the agents wearing masks
                                 agent_j_mask = agents['mask'][j] == True
                                 agent_k_mask = agents['mask'][k] == True
+                                
                                 # If the infected is not wearing a mask
                                 if not agent_j_mask and agent_k_mask:
                                     if np.random.random() >= .85:
@@ -253,11 +258,12 @@ def update(i):
                                         if np.random.random() >= .5:
                                             agents['symptomatic'][k] = 1
                                             agents['color'][k] = 'Violet'
+                                            agents['num infected'][j] += 1
                                         else:
                                             agents['symptomatic'][k] = 0
                                             agents['color'][k] = 'Indigo'
                                         agents['time'][k] = 1
-                                        agents['num infected'][j] += 1
+                                        
                                 # If the susceptible is wearing a mask
                                 elif agent_j_mask and not agent_k_mask:
                                     if np.random.random() >= .95:
@@ -265,22 +271,24 @@ def update(i):
                                         if np.random.random() >= .5:
                                             agents['symptomatic'][k] = 1
                                             agents['color'][k] = 'Violet'
+                                            agents['num infected'][j] += 1
                                         else:
                                             agents['symptomatic'][k] = 0
                                             agents['color'][k] = 'Indigo'
                                         agents['time'][k] = 1
-                                        agents['num infected'][j] += 1
+                                        
                                 # If neither are wearing masks
                                 elif not agent_j_mask and not agent_k_mask:
                                     agents['state'][k] = 'Exposed'
                                     if np.random.random() >= .5:
                                         agents['symptomatic'][k] = 1
                                         agents['color'][k] = 'Violet'
+                                        agents['num infected'][j] += 1
                                     else:
                                         agents['symptomatic'][k] = 0
                                         agents['color'][k] = 'Indigo'
                                     agents['time'][k] = 1
-                                    agents['num infected'][j] += 1
+                                    
                         # Calculate if infection would have occured
                         elif agent_j_sympt:
                             if agent_k_infected or agent_k_recover:
@@ -291,15 +299,16 @@ def update(i):
                                     agent_k_mask = agents['mask'][k] == True
                                     # If the infected is not wearing a mask
                                     if not agent_j_mask and agent_k_mask:
-                                        if np.random.random() >= .85:
+                                        if np.random.random() >= .85/2:
                                             agents['num infected'][j] += 1
                                     # If the susceptible is wearing a mask
                                     elif agent_j_mask and not agent_k_mask:
-                                        if np.random.random() >= .95:
+                                        if np.random.random() >= .95/2:
                                             agents['num infected'][j] += 1
                                     # If neither are wearing masks
                                     elif not agent_j_mask and not agent_k_mask:
-                                        agents['num infected'][j] += 1
+                                        if np.random.random() >= .5:
+                                            agents['num infected'][j] += 1
                         elif not agent_j_sympt:
                             if agent_k_infected or agent_k_recover:
                                 # Define the probability of asymptomatic infect
@@ -311,15 +320,16 @@ def update(i):
                                     agent_k_mask = agents['mask'][k] == True
                                     # If the infected is not wearing a mask
                                     if not agent_j_mask and agent_k_mask:
-                                        if np.random.random() >= .85:
+                                        if np.random.random() >= .85/2:
                                             agents['num infected'][j] += 1
                                     # If the susceptible is wearing a mask
                                     elif agent_j_mask and not agent_k_mask:
-                                        if np.random.random() >= .95:
+                                        if np.random.random() >= .95/2:
                                             agents['num infected'][j] += 1
                                     # If neither are wearing masks
                                     elif not agent_j_mask and not agent_k_mask:
-                                        agents['num infected'][j] += 1
+                                        if np.random.random() >= .5:
+                                            agents['num infected'][j] += 1
 
         # Bounce agents off wall if projected position is beyond boundary conditions
         if x >= xmax:
@@ -343,43 +353,6 @@ def update(i):
         # Update the scatter collection, with the new colors, sizes and positions.
         scatter.set_color(agents['color'])
         scatter.set_offsets(agents['position'])
-
-    # Get values of the current time step
-    temp_infected = sum(agents['state']=='Infected')
-    temp_recovered = sum(agents['state']=='Recovered')
-    temp_infect_mask = sum(agents[agents['mask']==True]['state'] == 'Infected')
-    temp_suscept_mask = sum(agents[agents['mask']==True]['state'] == 'Susceptible')
-    temp_exposed = sum(agents['state']=='Exposed')
-    temp_infect_sympt = sum(agents[agents['symptomatic']==1]['state'] == 'Infected')
-    temp_infect_asympt = sum(agents[agents['symptomatic']==0]['state'] == 'Infected')
-    temp_write = str(i) + ',' + str(round(per_shelt * .1, 1)) + ',' + \
-                 str(round(per_mask * .1, 1)) + ',' + str(temp_infected)+ ',' \
-                 + str(temp_exposed) + ',' + str(temp_recovered) + ',' + \
-                 str(temp_infect_mask) + ',' + str(temp_suscept_mask) + ',' + \
-                 str(temp_infect_sympt) + ',' + str(temp_infect_asympt) + '\n'
-    # Save current data to a file
-    f.write(temp_write)
-
-# Animate the simulation by iterating
-animation = FuncAnimation(fig, update, frames=N_steps, interval=20)
-temp_name = '../../data/' + run_name + '.gif'
-animation.save(temp_name, writer='imagemagick')
-f.close()   elif y >= ymax:
-            y = 2 * ymax - deltay_temp - agents['position'][j, 1]
-            vy_temp *= -1
-        elif y <= 0:
-            y = - deltay_temp - agents['position'][j, 1]
-            vy_temp *= -1
-
-        # 
-        agents['position'][j] = np.array([x, y])
-        agents['velocity'][j, 0] = vx_temp
-        agents['velocity'][j, 1] = vy_temp
-
-        # Update the scatter collection, with the new colors, sizes and positions.
-        scatter.set_color(agents['color'])
-        scatter.set_offsets(agents['position'])
-
     # Get values of the current time step
     temp_infected = sum(agents['state']=='Infected')
     temp_recovered = sum(agents['state']=='Recovered')
