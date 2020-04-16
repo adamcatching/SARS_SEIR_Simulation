@@ -1,3 +1,9 @@
+# Import python packages
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+
+
 # Name the datafile
 run_name = 'asympt_test_mask'
 dataname = '../../data/' + run_name + '.csv'
