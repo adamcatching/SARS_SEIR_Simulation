@@ -1,3 +1,11 @@
+# Import python packages
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+import seaborn as sns
+import pandas as pd
+import scipy
+
 rand_num = 42
 # Fixing random state for reproducibility
 np.random.seed(rand_num)
