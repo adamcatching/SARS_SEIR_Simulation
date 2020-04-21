@@ -30,8 +30,8 @@ infected symptomatic,infected asymptomatic\n')
         # Figure ratio
         fig_rat = .35355
         # Set boundaries
-        xboundaries = [0, 75 * fig_rat]
-        yboundaries = [0, 75 * fig_rat]
+        xboundaries = [0, 60 * fig_rat]
+        yboundaries = [0, 60 * fig_rat]
         xmax, ymax = xboundaries[1]+.5 , yboundaries[1]+.5
 
         # Number of steps
