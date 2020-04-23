@@ -3,16 +3,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
-rand_num = 42
+# Set the random number
+rand_num = int(sys.argv[4])
 # Fixing random state for reproducibility
 np.random.seed(rand_num)
 # Which replicate is this simulation
 g = int(sys.argv[1])
 # Use different percentages of mask wearers
 h = int(sys.argv[2])
+# Set percent of sheltering in place
+per_shelt = int(sys.argv[3])
+# Set percent of masked agents
+per_mask = int(h * 2)
+
 # Name the datafile
-run_name = 'mask_per_' + str(h * 2) + '0_iter_' + str(g)
-dataname = 'data/test_run/' + run_name + '.csv'
+run_name = 'mask_per_' + str(h * 2) + '0_shelter_'+ str(per_shelt) + '0_iter_' + str(g)
+dataname = '../data/test_run/' + run_name + '.csv'
+dataname_1 = '../data/test_run/' + run_name + '_agents.csv'
 f = open(dataname, 'w')
 # Write header of the file
 f.write('# Data from simulation of 500 agents with various levels\
@@ -21,6 +28,9 @@ f.write('time,percent sheltering,percent wearing masks,infected,\
 exposed,recovered,infected with mask,susceptible with mask,\
 infected symptomatic,infected asymptomatic\n')
 
+e = open(dataname_1, 'w')
+e.write('# Individual agent data from each time point\n')
+e.write('position x,position y,state,symptomatic,number infected,mask\n')
 
 """Values of the simulation"""
 
@@ -31,8 +41,6 @@ xboundaries = [0, 60 * fig_rat]
 yboundaries = [0, 60 * fig_rat]
 xmax, ymax = xboundaries[1]+.5 , yboundaries[1]+.5
 
-# Number of steps
-N_steps = 960
 # Number of agents
 n_agents = int(4000 * round(fig_rat ** 2, 2))
 # Set delta t
@@ -40,7 +48,7 @@ dt = 1
 # Set velocity
 velo = .15
 # Set percent of sheltering in place
-per_shelt = 0
+per_shelt = int(sys.argv[3])
 # Set percent of masked agents
 per_mask = int(h * 2)
 
@@ -66,7 +74,7 @@ init_angles = np.random.uniform(0, 2 * np.pi, n_agents)
 velocities = np.array([[np.sin(x), np.cos(x)] for x in init_angles]) 
 velocities *= velo
 # Get percentage of agents 'sheltering'
-num_shelt = int(per_shelt * n_agents)
+num_shelt = int(per_shelt * n_agents * .1)
 # Make sheltering agents static (if any)
 velocities[:num_shelt] = np.zeros((num_shelt, 2))
 # Number of hours for asymptomatic incubation
@@ -131,10 +139,9 @@ while temp_exposed != 0 or temp_infected != 0:
             agent_j_sympt = agents['symptomatic'][j]
             if agent_j_infected and agent_j_sympt:
                 if agents['time'][j] >= sympt_infect:
-                    if agents['color'][j] == 'Firebrick':
-                        agents['state'][j] = 'Recovered'
-                        agents['color'][j] = 'Firebrick'
-                        agents['time'][j] = 1
+                    agents['state'][j] = 'Recovered'
+                    agents['color'][j] = 'Darkgreen'
+                    agents['time'][j] = 1
                 else:
                     agents['time'][j] += 1
             elif agent_j_infected and not agent_j_sympt:
@@ -198,6 +205,8 @@ while temp_exposed != 0 or temp_infected != 0:
                     agent_k_suscept = agents['state'][k] == 'Susceptible'
                     # Calculate if agents are symptomatic
                     agent_j_sympt = agents['symptomatic'][j] == 1
+                    # Store time agent has been in this state
+                    agent_j_time = agents['time'][j]
                     # If agent j is infected and agent k is susceptible
                     if agent_j_infected:
                         if agent_j_sympt and agent_k_suscept:
@@ -219,6 +228,7 @@ while temp_exposed != 0 or temp_infected != 0:
                                             agents['symptomatic'][k] = 0
                                             agents['color'][k] = 'Indigo'
                                         agents['time'][k] = 1
+                                        agents['touch'][j] += 1
 
                                 # If the susceptible is wearing a mask
                                 elif agent_j_mask and not agent_k_mask:
@@ -232,6 +242,7 @@ while temp_exposed != 0 or temp_infected != 0:
                                             agents['symptomatic'][k] = 0
                                             agents['color'][k] = 'Indigo'
                                         agents['time'][k] = 1
+
 
                                 # If neither are wearing masks
                                 elif not agent_j_mask and not agent_k_mask:
@@ -365,6 +376,10 @@ while temp_exposed != 0 or temp_infected != 0:
         agents['position'][j] = np.array([x, y])
         agents['velocity'][j, 0] = vx_temp
         agents['velocity'][j, 1] = vy_temp
+        temp_agents = str(agents['position'][j][0]) + ',' + str(agents['position'][j][1]) + \
+                      ',' + str(agents['state'][j]) + ',' + str(agents['symptomatic'][j]) + \
+                      ',' + str(agents['num infected'][j]) + ',' + str(agents['mask'][j]) + '\n'
+        e.write(temp_agents)
 
     # Get values of the current time step
     temp_infected = sum(agents['state']=='Infected')
@@ -376,11 +391,14 @@ while temp_exposed != 0 or temp_infected != 0:
     temp_infect_asympt = sum(agents[agents['symptomatic']==0]['state'] == 'Infected')
     temp_write = str(i) + ',' + str(round(per_shelt * .1, 1)) + ',' + \
                  str(round(per_mask * .1, 1)) + ',' + str(temp_infected)+ ',' \
-                 + str(temp_exposed) + ',' + str(temp_recovered) + ',' + \
+                 + str(temp_exposed) + ',' +  str(temp_recovered) + ',' + \
                  str(temp_infect_mask) + ',' + str(temp_suscept_mask) + ',' + \
                  str(temp_infect_sympt) + ',' + str(temp_infect_asympt) + '\n'
     # Save current data to a file
     f.write(temp_write)
 
+
+
 # Close file
 f.close()
+e.close()
