@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import sys
 
 # Set percentage of asymptomatic
-per_asympt = int(sys.argv[1]) * .1
+per_asympt = int(sys.argv[1]) * .01
 # Set the random number
 rand_num = int(sys.argv[2])
 # Set iteration
