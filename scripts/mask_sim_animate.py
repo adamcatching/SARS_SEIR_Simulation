@@ -407,6 +407,15 @@ for h in range(5):
                          str(new_infected) + ',' +  str(per_mask) + '\n'
             # Save current data to a file
             f.write(temp_write)
+<<<<<<< HEAD:scripts/mask_and_shelter_sim.py
         # Close file
         f.close()
         e.close()
+=======
+
+        # Animate the simulation by iterating
+        animation = FuncAnimation(fig, update, frames=N_steps, interval=24)
+        temp_name = '../../data/first_run/' + run_name + '.gif'
+        animation.save(temp_name, writer='imagemagick')
+        f.close()
+>>>>>>> c052adbdbc821d0b33ac1cc6abdc48c16c8acefd:scripts/mask_sim_animate.py
