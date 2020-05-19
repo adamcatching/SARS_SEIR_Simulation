@@ -7,4 +7,12 @@ Infectious disease spreads through its ability to infect hosts (agents) and be t
 
 Python's is used for agent data storage and computation of which agents transition and how. A graphical display through the matplotlib and seaborn packages are used for the visual of agent's position and state during iterative steps. Data from each simulation is tidily written to a .csv file where data analysis can quickly be done with pandas, seaborn, and scipy packages.
 
-The current script has a lot of unnecessary if-thens, will be cleaned up in the future.
+To simulate 500 agents over different combinations of mask and sheltering parameters, use the mask_and_shelter_sim.py script.
+
+**python mask_and_shelter_sim.py a b c** 
+    * Where a is the chance of an infected agent being asymptomatic (a=50 -> 50%)
+    * Where b is the random number generator seed, an integer
+    * Where c is the simulation replicate to distinguish output files
+    
+    
+Seeds used for 100 simulations of each condition were: 42 1137 
