@@ -10,15 +10,17 @@ rand_num = int(sys.argv[2])
 # Set iteration
 set_iter = str(sys.argv[3])
 
+# Iterate over percentage of individuals wearing masks
 for h in range(5):
+    # Iterate over percentage of individuals social distancing
     for g in range(5):
         # Fixing random state for reproducibility
         np.random.seed(rand_num)
 
-        """# Which replicate is this simulation
-        g = int(sys.argv[1])
-        # Use different percentages of mask wearers
-        h = int(sys.argv[2])"""
+        # Set number of steps
+        N_steps = 4200
+
+
         # Set percent of sheltering in place
         per_shelt = int(g * 2)
         # Set percent of masked agents
@@ -28,17 +30,17 @@ for h in range(5):
         run_name = 'mask_per_' + str(per_mask) + '0_shelter_' + str(per_shelt) + '0_asymp_' + str(per_asympt) +  '_striter_' + set_iter
         dataname = 'data/test_run/' + run_name + '.csv'
         dataname_1 = 'data/test_run_traj/' + run_name + '_agents.csv'
+
+        # Open files
         f = open(dataname, 'w')
         # Write header of the file
         f.write('# Data from simulation of 500 agents with various levels\
          of sheltering or mask usage\n')
-        f.write('timepercent sheltering,percent wearing masks,infected,\
-        exposedrecovered,infected with mask,susceptible with mask,\
-        infected symptomaticinfected asymptomatic,new infected,percent asymptomatic\n')
+        f.write('time,percent sheltering,percent wearing masks,infected,exposed,recovered,infected with mask,susceptible with mask,infected symptomatic,infected asymptomatic,new infected,percent asymptomatic\n')
 
         e = open(dataname_1, 'w')
         e.write('# Individual agent data from each time point\n')
-        e.write('position xposition y,state,symptomatic,number infected,mask\n')
+        e.write('position x,position y,state,symptomatic,number infected,mask\n')
 
         """Values of the simulation"""
 
@@ -110,7 +112,7 @@ for h in range(5):
         agents['symptomatic'] = np.zeros(n_agents)
         agents['num infected'] = np.zeros(n_agents)
 
-        # Make the one agent infected
+        # Make the one agent infectedm
         agents['color'][0] = 'Violet'
         agents['state'][0] = 'Exposed'
         agents['time'][0] = 1
@@ -118,17 +120,19 @@ for h in range(5):
         agents['symptomatic'][0] = 1
         temp_exposed = 1
         temp_infected = 0
+
         i = 0
-        for i in range(4200):
+        for i in range(N_steps):
 
             """
             Take the information from the data stored in the agents array
             to calculate if an infected agent recovers if two agents 
             interact and if the agent bounces off a boundary
             """
-            #print(i)
+
+            # Update day of simulation
             if i % 24 == 0:
-                print(str(3 * int(i / 24)) + ' days simulated')
+                print(str(int(i / 24)) + ' days simulated')
             i += 1
 
             # Set number of new infected 
@@ -381,7 +385,7 @@ for h in range(5):
                     y = - deltay_temp - agents['position'][j, 1]
                     vy_temp *= -1
 
-                # 
+                # Update position and velocity of agent
                 agents['position'][j] = np.array([x, y])
                 agents['velocity'][j, 0] = vx_temp
                 agents['velocity'][j, 1] = vy_temp
@@ -390,7 +394,7 @@ for h in range(5):
                               ',' + str(agents['num infected'][j]) + ',' + str(agents['mask'][j]) + '\n'
                 e.write(temp_agents)
 
-            # Get values of the current time step
+            # Get summary values of the current time step
             temp_infected = sum(agents['state']=='Infected')
             temp_recovered = sum(agents['state']=='Recovered')
             temp_infect_mask = sum(agents[agents['mask']==True]['state'] == 'Infected')
@@ -398,7 +402,9 @@ for h in range(5):
             temp_exposed = sum(agents['state']=='Exposed')
             temp_infect_sympt = sum(agents[agents['symptomatic']==1]['state'] == 'Infected')
             temp_infect_asympt = sum(agents[agents['symptomatic']==0]['state'] == 'Infected')
-            temp_write = str(i) + '' + str(round(per_shelt * .1, 1)) + ',' + \
+
+            # Write summary data to file
+            temp_write = str(i) + ',' + str(round(per_shelt * .1, 1)) + ',' + \
                          str(round(per_mask * .1, 1)) + ',' + str(temp_infected)+ ',' \
                          + str(temp_exposed) + ',' +  str(temp_recovered) + ',' + \
                          str(temp_infect_mask) + ',' + str(temp_suscept_mask) + ',' + \
@@ -406,6 +412,6 @@ for h in range(5):
                          str(new_infected) + ',' +  str(per_mask) + '\n'
             # Save current data to a file
             f.write(temp_write)
-        # Close file
+        # Close files
         f.close()
         e.close()
