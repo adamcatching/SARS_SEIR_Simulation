@@ -2,6 +2,7 @@
 Agent-based model testing effectiveness of mask usage. Using Monte Carlo simulations, informed by real-world parameters, various conditions can be examined for their power to slow or halt pathogen transmission.
 
 Published in <a href="https://www.nature.com/articles/s41598-021-94960-5">in Scientific Reports</a> .
+Catching, A., Capponi, S., Yeh, M.T. et al. Examining the interplay between face mask usage, asymptomatic transmission, and social distancing on the spread of COVID-19. Sci Rep 11, 15998 (2021). https://doi.org/10.1038/s41598-021-94960-5
 
 
 ## Agent-Based SEIR Model
